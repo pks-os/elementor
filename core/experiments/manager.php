@@ -76,8 +76,9 @@ class Manager extends Base_Object {
 			'mutable' => true,
 			static::TYPE_HIDDEN => false,
 			'new_site' => [
-				'default_active' => false,
 				'always_active' => false,
+				'default_active' => false,
+				'default_inactive' => false,
 				'minimum_installation_version' => null,
 			],
 			'on_state_change' => null,
@@ -92,7 +93,7 @@ class Manager extends Base_Object {
 
 		$new_site = $experimental_data['new_site'];
 
-		if ( $new_site['default_active'] || $new_site['always_active'] ) {
+		if ( $new_site['default_active'] || $new_site['always_active'] || $new_site['default_inactive'] ) {
 			$is_new_installation = $this->install_compare( $new_site['minimum_installation_version'] );
 
 			if ( $is_new_installation ) {
@@ -102,6 +103,8 @@ class Manager extends Base_Object {
 					$experimental_data['mutable'] = false;
 				} elseif ( $new_site['default_active'] ) {
 					$experimental_data['default'] = self::STATE_ACTIVE;
+				} elseif ( $new_site['default_inactive'] ) {
+					$experimental_data['default'] = self::STATE_INACTIVE;
 				}
 			}
 		}
@@ -368,7 +371,6 @@ class Manager extends Base_Object {
 		$this->add_feature( [
 			'name' => 'additional_custom_breakpoints',
 			'title' => esc_html__( 'Additional Custom Breakpoints', 'elementor' ),
-			'tag' => esc_html__( 'Performance', 'elementor' ),
 			'description' => sprintf(
 				'%1$s <a href="https://go.elementor.com/wp-dash-additional-custom-breakpoints/" target="_blank">%2$s</a>',
 				esc_html__( 'Get pixel-perfect design for every screen size. You can now add up to 6 customizable breakpoints beyond the default desktop setting: mobile, mobile extra, tablet, tablet extra, laptop, and widescreen.', 'elementor' ),
@@ -440,10 +442,7 @@ class Manager extends Base_Object {
 			'description' => esc_html__( 'Improve the performance of the Nested widgets.', 'elementor' ),
 			static::TYPE_HIDDEN => true,
 			'release_status' => self::RELEASE_STATUS_DEV,
-			'default' => self::STATE_INACTIVE,
-			'new_site' => [
-				'default_active' => false,
-			],
+			'default' => self::STATE_ACTIVE,
 		] );
 
 		$this->add_feature( [

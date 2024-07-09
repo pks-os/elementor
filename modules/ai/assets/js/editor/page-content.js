@@ -16,6 +16,8 @@ import useUpgradeMessage from './hooks/use-upgrade-message';
 import UsageMessages from './components/usage-messages';
 import { Box, Typography } from '@elementor/ui';
 import Loader from './components/loader';
+import { useEffect, useState } from 'react';
+import { useRequestIds } from './context/requests-ids';
 
 const PageContent = (
 	{
@@ -25,7 +27,6 @@ const PageContent = (
 		onConnect,
 		getControlValue,
 		setControlValue,
-		controlView,
 		additionalOptions,
 	} ) => {
 	const {
@@ -36,11 +37,23 @@ const PageContent = (
 		fetchData,
 		hasSubscription,
 		credits,
-		usagePercentage,
+		usagePercentage: initialUsagePercentage,
 	} = ( () => additionalOptions?.useCustomInit ?? useUserInfo )()();
+
+	const { updateUsagePercentage, usagePercentage } = useRequestIds();
+	const [ isInitUsageDone, setIsInitUsageDone ] = useState( false );
+
+	useEffect( () => {
+		if ( ! isInitUsageDone && ( initialUsagePercentage || 0 === initialUsagePercentage ) ) {
+			updateUsagePercentage( initialUsagePercentage );
+			setIsInitUsageDone( true );
+		}
+	}, [ initialUsagePercentage, isInitUsageDone, updateUsagePercentage ] );
+
 	const { showBadge } = useUpgradeMessage( { usagePercentage, hasSubscription } );
 	const promptDialogStyleProps = {
 		sx: {
+			zIndex: 170000, // Make sure the dialog is above wp attachment details view
 			'& .MuiDialog-container': {
 				alignItems: 'flex-start',
 				mt: 'media' === type ? '2.5vh' : '18vh',
@@ -58,7 +71,7 @@ const PageContent = (
 			sx: {
 				m: 0,
 				maxHeight: 'media' === type ? '95vh' : '76vh',
-				height: ! isLoading && 'media' === type ? '95vh' : 'auto',
+				height: 'auto',
 			},
 		},
 	};
@@ -76,7 +89,7 @@ const PageContent = (
 		);
 	};
 
-	if ( isLoading ) {
+	if ( isLoading || ! isInitUsageDone ) {
 		return (
 
 			<PromptDialog onClose={ onClose } { ...promptDialogStyleProps } maxWidth={ 'media' === type ? 'lg' : 'sm' }>
@@ -134,7 +147,7 @@ const PageContent = (
 					<FormMedia
 						onClose={ onClose }
 						getControlValue={ getControlValue }
-						controlView={ controlView }
+						setControlValue={ setControlValue }
 						additionalOptions={ additionalOptions }
 						credits={ credits }
 						maybeRenderUpgradeChip={ maybeRenderUpgradeChip }
@@ -222,7 +235,6 @@ PageContent.propTypes = {
 	getControlValue: PropTypes.func.isRequired,
 	setControlValue: PropTypes.func.isRequired,
 	additionalOptions: PropTypes.object,
-	controlView: PropTypes.object,
 };
 
 export default PageContent;
